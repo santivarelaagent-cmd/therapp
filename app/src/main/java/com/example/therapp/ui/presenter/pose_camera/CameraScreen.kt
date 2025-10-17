@@ -16,10 +16,16 @@
 package com.example.therapp.ui.presenter.pose_camera
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -28,7 +34,15 @@ import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,9 +51,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -50,13 +67,17 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.PermMedia
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -74,14 +95,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.util.Consumer
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
+import com.example.therapp.ui.components.pose.models.Joint
 import com.example.therapp.ui.components.CircularBtn
-import com.example.therapp.ui.components.PoseOverlay
+import com.example.therapp.ui.components.pose.PoseOverlay
+import com.example.therapp.ui.components.UploadProgressOverlay
 import com.example.therapp.ui.navigation.routes.CameraRoutes
 import com.example.therapp.ui.presenter.pose_camera.helper.PoseLandmarkerHelper
 import com.google.mediapipe.tasks.vision.core.RunningMode
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun CameraScreen(
@@ -140,6 +166,27 @@ fun CameraScreen(
 
     var zoomRatio by remember { mutableStateOf(1f) }
 
+    var videoCapture by remember { mutableStateOf<VideoCapture<Recorder>?>(null) }
+    var recording by remember { mutableStateOf<Recording?>(null) }
+    var isRecording by remember { mutableStateOf(false) }
+
+
+    var selectedJoints by remember {
+        mutableStateOf(
+            setOf<Joint>(
+                Joint.LEFT_ELBOW,
+                Joint.RIGHT_ELBOW,
+                Joint.RIGHT_KNEE,
+                Joint.LEFT_HIP,
+                Joint.LEFT_SHOULDER
+            )
+        )
+    }
+    var showJointSelector by remember { mutableStateOf(false) }
+
+    val uploadState by viewModel.uploadState.collectAsState()
+    val uploadProgress by viewModel.uploadProgress.collectAsState()
+
     LaunchedEffect(camera) {
         // Observar zoom inicial al enlazar cámara
         val zoomState = camera?.cameraInfo?.zoomState?.value
@@ -156,10 +203,13 @@ fun CameraScreen(
     }
 
     // Verificar permisos de cámara
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (!isGranted) {
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
+        val audioGranted = permissions[Manifest.permission.RECORD_AUDIO] ?: false
+
+        if (!cameraGranted) {
             navController.navigate(CameraRoutes.Permissions) {
                 popUpTo(CameraRoutes.Camera) { inclusive = true }
             }
@@ -167,8 +217,15 @@ fun CameraScreen(
     }
 
     LaunchedEffect(Unit) {
+        val permissionsToRequest = mutableListOf<String>()
         if (!checkCameraPermission(context)) {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            permissionsToRequest.add(Manifest.permission.CAMERA)
+        }
+        if (!checkAudioPermission(context)) {
+            permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        }
+        if (permissionsToRequest.isNotEmpty()) {
+            permissionsLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 
@@ -176,6 +233,7 @@ fun CameraScreen(
     LaunchedEffect(lifecycleOwner, cameraFacing) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProvider = cameraProviderFuture.get()
+
 
         val resolutionSelector = ResolutionSelector.Builder()
             .setAspectRatioStrategy(
@@ -210,6 +268,11 @@ fun CameraScreen(
                         )
                 }
             }
+        val recorder = Recorder.Builder()
+            .setQualitySelector(QualitySelector.from(Quality.HD))
+            .build()
+
+        videoCapture = VideoCapture.withOutput(recorder)
 
         try {
             cameraProvider?.unbindAll()
@@ -217,7 +280,8 @@ fun CameraScreen(
                 lifecycleOwner,
                 CameraSelector.Builder().requireLensFacing(cameraFacing).build(),
                 preview,
-                imageAnalyzer
+                imageAnalyzer,
+                videoCapture
             )
         } catch (e: Exception) {
             Log.e("CameraScreen", "Error configurando cámara: ${e.message}")
@@ -227,6 +291,7 @@ fun CameraScreen(
     // Limpiar recursos al salir
     DisposableEffect(lifecycleOwner) {
         onDispose {
+            recording?.stop()
             cameraProvider?.unbindAll()
             poseLandmarkerHelper.clearPoseLandmarker()
         }
@@ -253,11 +318,14 @@ fun CameraScreen(
                     preview?.setSurfaceProvider(previewView.surfaceProvider)
                 },
             )
+
+
             // Overlay de poses con resultados reales de MediaPipe
             PoseOverlay(
                 results = poseResults,
                 imageWidth = inputImageWidth,
                 imageHeight = inputImageHeight,
+                trackedPoints = selectedJoints.toList(),
                 modifier = Modifier
 //                    .padding(50.dp)
                     .fillMaxSize()
@@ -312,6 +380,41 @@ fun CameraScreen(
                                 }
                             }
                         }
+                        if (isRecording) {
+                            Card(
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .width(115.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.Red.copy(alpha = 0.7f)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()  // Agregar esto
+                                        .padding(
+                                            horizontal = 5.dp,
+                                            vertical = 4.dp
+                                        ),  // Agregar padding vertical
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center  // Agregar esto para centrar
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Circle,
+                                        contentDescription = "Recording",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "GRABANDO",
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     Column(
@@ -325,7 +428,7 @@ fun CameraScreen(
                         CircularBtn(
                             icon = Icons.Default.Settings,
                             size = 40,
-                            onClick = {}
+                            onClick = { showJointSelector = true }
                         )
 
                         CircularBtn(
@@ -365,8 +468,36 @@ fun CameraScreen(
                 }
             }
             // Botón de galería
-            LeftBottomMenu()
-            BottomCenterMenu(navController)
+            LeftBottomMenu(
+                viewModel = viewModel,
+                onVideoSelected = { uri ->
+                    viewModel.uploadVideo(uri)
+                }
+            )
+            BottomCenterMenu(
+                isRecording = isRecording,
+                onRecordClick = {
+                    if (isRecording) {
+                        // Detener grabación
+                        recording?.stop()
+                        recording = null
+                        isRecording = false
+                    } else {
+                        // Iniciar grabación
+                        startRecording(
+                            context = context,
+                            videoCapture = videoCapture,
+                            onRecordingStarted = { activeRecording ->
+                                recording = activeRecording
+                                isRecording = true
+                            },
+                            onError = { errorMsg ->
+                                Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                }
+            )
             RightBottomMenu(
                 cameraFacing,
                 onCameraFacingChange = { newFacing ->
@@ -378,28 +509,72 @@ fun CameraScreen(
                         }
                 }
             )
+            if (showJointSelector) {
+                JointSelectorDialog(
+                    selectedJoints = selectedJoints,
+                    onJointsChanged = { selectedJoints = it },
+                    onDismiss = { showJointSelector = false }
+                )
+            }
+            UploadProgressOverlay(
+                uploadState = uploadState,
+                uploadProgress = uploadProgress,
+                onDismiss = { viewModel.resetUploadState() }
+            )
         }
     }
 }
 
 @Composable
-private fun BottomCenterMenu(navController: NavController) {
+private fun BottomCenterMenu(
+    isRecording: Boolean,
+    onRecordClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        IconButton(
-            modifier = Modifier.size(85.dp),
-            onClick = { navController.navigate(CameraRoutes.Gallery) }
-        ) {
-            Icon(
-                imageVector = Icons.Default.Circle,
-                contentDescription = "Configuración",
+        if (isRecording) {
+            // Botón cuando está grabando: círculo rojo con icono Stop blanco
+            IconButton(
                 modifier = Modifier.size(85.dp),
-                tint = Color.White
-            )
+                onClick = onRecordClick
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Círculo rojo de fondo
+                    Icon(
+                        imageVector = Icons.Default.Circle,
+                        contentDescription = "Stop recording background",
+                        modifier = Modifier.size(85.dp),
+                        tint = Color.Red
+                    )
+                    // Icono Stop blanco en el centro
+                    Icon(
+                        imageVector = Icons.Default.Stop,
+                        contentDescription = "Stop recording",
+                        modifier = Modifier.size(40.dp),
+                        tint = Color.White
+                    )
+                }
+            }
+        } else {
+            // Botón cuando no está grabando: círculo blanco
+            IconButton(
+                modifier = Modifier.size(85.dp),
+                onClick = onRecordClick
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Circle,
+                    contentDescription = "Start recording",
+                    modifier = Modifier.size(85.dp),
+                    tint = Color.White
+                )
+            }
         }
     }
 }
@@ -436,7 +611,41 @@ private fun RightBottomMenu(
 }
 
 @Composable
-private fun LeftBottomMenu() {
+private fun LeftBottomMenu(
+    viewModel: MainViewModel,
+    onVideoSelected: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                val mimeType = context.contentResolver.getType(it)
+
+                when {
+                    mimeType?.startsWith("video/") == true -> {
+                        Toast.makeText(
+                            context,
+                            "Video seleccionado, subiendo...",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onVideoSelected(it)
+                    }
+
+                    mimeType?.startsWith("image/") == true -> {
+                        Toast.makeText(context, "Imagen seleccionada", Toast.LENGTH_SHORT).show()
+                    }
+
+                    else -> {
+                        Toast.makeText(context, "Archivo no compatible", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } ?: run {
+                Toast.makeText(context, "No se seleccionó ningún archivo", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    )
     Box(
         contentAlignment = Alignment.BottomStart,
         modifier = Modifier
@@ -455,15 +664,179 @@ private fun LeftBottomMenu() {
             CircularBtn(
                 size = 40,
                 icon = Icons.Default.PermMedia,
-                onClick = {}
+                onClick = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
+                    )
+                }
             )
         }
     }
 }
+
+@Composable
+fun JointSelectorDialog(
+    selectedJoints: Set<Joint>,
+    onJointsChanged: (Set<Joint>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Seleccionar Articulaciones",
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Selecciona las articulaciones a rastrear:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                items(Joint.values()) { joint ->
+                    JointCheckboxItem(
+                        joint = joint,
+                        isSelected = selectedJoints.contains(joint),
+                        onToggle = {
+                            val newSet = selectedJoints.toMutableSet()
+                            if (newSet.contains(joint)) {
+                                newSet.remove(joint)
+                            } else {
+                                newSet.add(joint)
+                            }
+                            onJointsChanged(newSet)
+                        }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Aceptar")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onJointsChanged(setOf())
+                }
+            ) {
+                Text("Limpiar todo")
+            }
+        }
+    )
+}
+
+@Composable
+private fun JointCheckboxItem(
+    joint: Joint,
+    isSelected: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = isSelected,
+            onCheckedChange = { onToggle() }
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = joint.jointName,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
 
 private fun checkCameraPermission(context: Context): Boolean {
     return ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun checkAudioPermission(context: Context): Boolean {
+    return ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.RECORD_AUDIO
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun startRecording(
+    context: Context,
+    videoCapture: VideoCapture<Recorder>?,
+    onRecordingStarted: (Recording) -> Unit,
+    onError: (String) -> Unit
+) {
+    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.getDefault())
+        .format(System.currentTimeMillis())
+
+    val contentValues = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+        put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/TherApp")
+        }
+    }
+
+    val mediaStoreOutputOptions = MediaStoreOutputOptions
+        .Builder(context.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+        .setContentValues(contentValues)
+        .build()
+
+    try {
+        val recording = videoCapture?.output
+            ?.prepareRecording(context, mediaStoreOutputOptions)
+            ?.apply {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    withAudioEnabled()
+                }
+            }
+            ?.start(ContextCompat.getMainExecutor(context), Consumer { videoRecordEvent ->
+                when (videoRecordEvent) {
+                    is VideoRecordEvent.Start -> {
+                        Log.d("CameraScreen", "Recording started")
+                    }
+
+                    is VideoRecordEvent.Finalize -> {
+                        if (!videoRecordEvent.hasError()) {
+                            val msg = "Video guardado: ${videoRecordEvent.outputResults.outputUri}"
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            Log.d("CameraScreen", msg)
+                        } else {
+                            val errorMsg = "Error al grabar: ${videoRecordEvent.error}"
+                            onError(errorMsg)
+                            Log.e("CameraScreen", errorMsg)
+                        }
+                    }
+                }
+            })
+
+        if (recording != null) {
+            onRecordingStarted(recording)
+        } else {
+            onError("Error al iniciar la grabación")
+        }
+    } catch (e: Exception) {
+        onError("Error: ${e.message}")
+        Log.e("CameraScreen", "Error al iniciar grabación", e)
+    }
 }

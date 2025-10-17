@@ -1,6 +1,7 @@
 package com.example.therapp.di.modules
 
 import com.example.therapp.domain.use_cases.auth.AuthUseCases
+import com.example.therapp.service.VideoStorageRepository
 import com.example.therapp.ui.presenter.pose_camera.MainViewModel
 import com.example.therapp.ui.presenter.sign_in.SignInViewModel
 import dagger.Module
@@ -23,5 +24,9 @@ object ViewModelModule {
 
     @Provides
     @Singleton
-    fun provideMainViewModel() = MainViewModel()
+    fun provideMainViewModel(
+        videoRepository: VideoStorageRepository
+    ) = MainViewModel(
+        videoRepository
+    )
 }

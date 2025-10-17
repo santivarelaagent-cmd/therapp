@@ -7,6 +7,7 @@ import com.example.therapp.data.routines.remote.RoutinesApi
 import com.example.therapp.domain.repository.AuthRepository
 import com.example.therapp.domain.repository.RoutinesRepository
 import com.example.therapp.security.AsyncStorage
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,8 +22,9 @@ object RepositoryModule {
     @Singleton
     fun provideAuthRepository(
         asyncStorage: AsyncStorage,
-        authApi: AuthApi
-    ): AuthRepository = AuthRepositoryImpl(asyncStorage, authApi)
+        authApi: AuthApi,
+        gson: Gson
+    ): AuthRepository = AuthRepositoryImpl(asyncStorage, authApi, gson)
 
     @Provides
     @Singleton

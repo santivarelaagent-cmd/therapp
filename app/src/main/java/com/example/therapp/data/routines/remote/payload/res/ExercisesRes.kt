@@ -16,5 +16,5 @@ data class ExercisesRes(
     val isModel: Boolean,
     @SerializedName("is_active")
     val isActive: Boolean,
-    val difficulties: List<String>
+    val difficulties: List<DifficultyRes>
 )

@@ -15,6 +15,11 @@ nav_version = "2.8.4"
 kotlinxSerializationJson = "1.7.3"
 materialIconsExtended = "1.6.3"
 retrofit = "2.9.0"
+googleServices = "4.4.1"
+google = "4.4.1"
+firebaseBom = "32.8.1"
+composeVersion = "1.0.0-beta01"
+
 
 #Okhttp
 okhttp = "4.12.0"
@@ -58,6 +63,8 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltV
 # Hilt Nav
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 
+# Google
+google-services = { group = "com.google.gms", name = "google-services", version.ref = "googleServices" }
 
 androidx-navigation-common-android = { group = "androidx.navigation", name = "navigation-common-android", version.ref = "navigationCommonAndroid" }
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "nav_version" }
@@ -87,6 +94,13 @@ mediapipe-tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision"
 mediapipe-tasks-core = { group = "com.google.mediapipe", name = "tasks-core", version.ref = "mediaPipeTasksVision" }
 tasks-genai = { module = "com.google.mediapipe:tasks-genai", version.ref = "tasksGenai" }
 
+# Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx" }
+firebase-storage = { module = "com.google.firebase:firebase-storage-ktx" }
+
+# Glide
+glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "composeVersion" }
 
 # Retrofit
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
@@ -113,4 +127,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hiltVersion" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-
+googleServices = { id = "com.google.gms.google-services", version.ref = "google" }

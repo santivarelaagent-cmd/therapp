@@ -1,10 +1,14 @@
 package com.example.therapp.ui.presenter.pose_camera
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.therapp.service.VideoStorageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -17,7 +21,16 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class MainViewModel
-@Inject constructor() : ViewModel() {
+@Inject constructor(
+    private val videoStorageRepository: VideoStorageRepository
+) : ViewModel() {
+
+    private val _uploadState = MutableStateFlow<UploadState>(UploadState.Idle)
+    val uploadState: StateFlow<UploadState> = _uploadState
+
+    private val _uploadProgress = MutableStateFlow(0f)
+    val uploadProgress: StateFlow<Float> = _uploadProgress
+
     // Delegado (CPU/GPU)
     private val _currentDelegate = MutableStateFlow(DELEGATE_CPU)
     val currentDelegate: StateFlow<Int> = _currentDelegate.asStateFlow()
@@ -88,4 +101,38 @@ class MainViewModel
         const val DEFAULT_POSE_TRACKING_CONFIDENCE = 0.5f
         const val DEFAULT_POSE_PRESENCE_CONFIDENCE = 0.5f
     }
+
+    fun uploadVideo(videoUri: Uri) {
+        viewModelScope.launch {
+            _uploadState.value = UploadState.Uploading
+
+            videoStorageRepository.uploadVideo(
+                videoUri = videoUri,
+                onProgress = { progress ->
+                    _uploadProgress.value = progress
+                }
+            ).fold(
+                onSuccess = { downloadUrl ->
+                    _uploadState.value = UploadState.Success(downloadUrl)
+                    _uploadProgress.value = 0f
+                },
+                onFailure = { exception ->
+                    _uploadState.value = UploadState.Error(exception.message ?: "Error desconocido")
+                    _uploadProgress.value = 0f
+                }
+            )
+        }
+    }
+
+    fun resetUploadState() {
+        _uploadState.value = UploadState.Idle
+        _uploadProgress.value = 0f
+    }
+}
+
+sealed class UploadState {
+    object Idle : UploadState()
+    object Uploading : UploadState()
+    data class Success(val downloadUrl: String) : UploadState()
+    data class Error(val message: String) : UploadState()
 }

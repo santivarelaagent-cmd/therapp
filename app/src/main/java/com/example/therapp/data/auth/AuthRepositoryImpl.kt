@@ -4,8 +4,10 @@ import android.util.Log
 import com.example.therapp.common.api.apiRequestFlow
 import com.example.therapp.data.auth.remote.AuthApi
 import com.example.therapp.data.auth.remote.payload.req.SignInReq
+import com.example.therapp.data.auth.remote.payload.res.UserRes
 import com.example.therapp.domain.repository.AuthRepository
 import com.example.therapp.security.AsyncStorage
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -22,7 +24,8 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val storage: AsyncStorage,
-    private val api: AuthApi
+    private val api: AuthApi,
+    private val gson: Gson
 ) : AuthRepository {
     override fun signIn(req: SignInReq) = apiRequestFlow {
         val response = api.signIn(req)
@@ -30,6 +33,7 @@ class AuthRepositoryImpl @Inject constructor(
         if (response.isSuccessful) {
             response.body()?.let { signInRes ->
                 signInRes.accessToken?.let { saveToken(it) }
+                signInRes.user?.let { saveUser(it) }
             }
         }
         response
@@ -49,8 +53,30 @@ class AuthRepositoryImpl @Inject constructor(
         storage.setItem("access_token", token)
     }
 
+    suspend fun saveUser(user: UserRes) {
+        val userJson = gson.toJson(user)
+        storage.setItem("user", userJson)
+    }
     suspend fun clearToken() {
         storage.removeItem("access_token")
     }
+
+    override fun getUser(): Flow<UserRes?> {
+        return storage.observeItem("user").map { userJson ->
+            if (userJson.isNullOrEmpty()) {
+                null
+            } else {
+                try {
+                    // Deserializa el string JSON a un objeto UserRes
+                    gson.fromJson(userJson, UserRes::class.java)
+                } catch (e: Exception) {
+                    // Si el JSON está malformado o hay un error, devuelve null
+                    Log.e("AuthRepositoryImpl", "Error deserializing user JSON", e)
+                    null
+                }
+            }
+        }
+    }
+
 
 }

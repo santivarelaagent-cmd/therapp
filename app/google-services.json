@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1031925869477",
+    "project_id": "telerehabilitacion-9559e",
+    "storage_bucket": "telerehabilitacion-9559e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1031925869477:android:19beed78257183aa6d964c",
+        "android_client_info": {
+          "package_name": "com.example.therapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuHEgwTWfAycjwd-IZgMG8aibQkFE3Zd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

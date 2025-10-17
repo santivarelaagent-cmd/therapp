@@ -8,7 +8,10 @@ import com.example.therapp.domain.use_cases.routines.RoutinesUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import javax.inject.Inject
 
 
@@ -25,11 +28,20 @@ class RoutinesViewModel @Inject constructor(
 ) : ViewModel() {
     val scheduledTraining: StateFlow<ApiResponse<List<ScheduledTrainingRes>>> =
         routinesUseCases.getScheduledTraining()
+            // 2. Añade el operador catch para manejar excepciones del flujo
+            .catch { exception ->
+                // Comprueba el tipo de excepción para dar un mensaje más específico
+                val errorMessage = when (exception) {
+                    is SocketTimeoutException -> "Se agotó el tiempo de espera. Revisa tu conexión a internet."
+                    is UnknownHostException -> "No se pudo conectar al servidor. Revisa tu conexión a internet."
+                    else -> "Ocurrió un error inesperado: ${exception.message}"
+                }
+                // Emite el estado de error con el mensaje
+                emit(ApiResponse.Error(errorMessage))
+            }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = ApiResponse.Loading
             )
-
-
 }

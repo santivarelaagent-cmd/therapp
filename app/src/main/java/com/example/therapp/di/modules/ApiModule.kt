@@ -5,6 +5,7 @@ import com.example.therapp.data.auth.remote.AuthApi
 import com.example.therapp.data.routines.remote.RoutinesApi
 import com.example.therapp.security.AuthAuthenticator
 import com.example.therapp.security.AuthInterceptor
+import com.example.therapp.service.VideoStorageRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -56,5 +57,9 @@ class ApiModule {
     ): RoutinesApi =
         retrofit.client(okHttpClient).build().create(RoutinesApi::class.java)
 
-
+    @Provides
+    @Singleton
+    fun provideVideoStorageRepository(): VideoStorageRepository {
+        return VideoStorageRepository()
+    }
 }

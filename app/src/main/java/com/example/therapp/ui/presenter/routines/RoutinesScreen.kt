@@ -54,6 +54,7 @@ fun RoutinesScreen(
 
             is ApiResponse.Failure -> {
 
+                Text("Error de conexión")
             }
         }
     }

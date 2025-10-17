@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.googleServices)
 }
 
 android {
@@ -99,7 +100,13 @@ dependencies {
     implementation(libs.mediapipe.tasks.vision)
     implementation(libs.tasks.genai)
 
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.storage)
 
+    //Glide
+    implementation(libs.glide.compose)
 
     implementation(libs.bundles.camera)
 }
