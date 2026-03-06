@@ -23,8 +23,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.therapp.common.toReadableDate
-import com.example.therapp.data.routines.remote.payload.res.RoutineRes
-import com.example.therapp.data.routines.remote.payload.res.TherapyRes
+import com.example.therapp.domain.model.Routine
+import com.example.therapp.domain.model.Therapy
 
 
 /**
@@ -38,16 +38,15 @@ import com.example.therapp.data.routines.remote.payload.res.TherapyRes
 @Composable
 @Preview(showBackground = true, showSystemUi = true)
 fun RoutineItem(
-    routine: RoutineRes = RoutineRes(
+    routine: Routine = Routine(
         id = 1,
         therapyId = 1,
-        therapy = TherapyRes(
+        therapy = Therapy(
             id = 1,
             name = "name",
             description = "description",
             isActive = true,
             isModel = true,
-            routines = emptyList()
         ),
         name = "name",
         description = "description",
@@ -56,6 +55,7 @@ fun RoutineItem(
         isActive = true
     ),
     startTime: String = "startTime",
+    onItemClicked: (Int) -> Unit = {}
 ) {
     Column {
         Spacer(Modifier.height(10.dp))
@@ -63,7 +63,7 @@ fun RoutineItem(
             modifier = Modifier
                 .padding(start = 2.dp, end = 2.dp)
                 .fillMaxWidth(),
-            onClick = { }
+            onClick = { onItemClicked(routine.id) }
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -77,6 +77,7 @@ fun RoutineItem(
                 ) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(routine.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Text(routine.description, fontWeight = FontWeight.Light, fontSize = 14.sp)
@@ -86,13 +87,12 @@ fun RoutineItem(
                             fontSize = 14.sp
                         )
                     }
-                    Spacer(Modifier.weight(1f))
                     IconButton(
-                        onClick = {}
+                        onClick = { onItemClicked(routine.id) }
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Delete"
+                            contentDescription = "Go to detail"
                         )
                     }
                 }

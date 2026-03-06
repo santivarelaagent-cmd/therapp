@@ -1,4 +1,4 @@
-package com.example.therapp.ui.components.pose.strategies.scale
+package com.example.therapp.ui.components.pose.strategies
 
 /**
  * @author Santiago Varela Daza

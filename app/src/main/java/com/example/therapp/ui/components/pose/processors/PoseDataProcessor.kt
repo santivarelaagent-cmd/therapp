@@ -1,11 +1,14 @@
 package com.example.therapp.ui.components.pose.processors
 
+import androidx.compose.ui.geometry.Offset
 import com.example.therapp.ui.components.pose.models.Joint
 import com.example.therapp.ui.components.pose.builders.ArcDataBuilder
 import com.example.therapp.ui.components.pose.models.AngleData
 import com.example.therapp.ui.components.pose.models.ScaledCoordinates
-import com.example.therapp.ui.components.pose.strategies.angle.AngleCalculator
-import com.example.therapp.ui.components.pose.strategies.angle.VectorAngleCalculator
+import com.example.therapp.ui.components.pose.calculators.AngleCalculator
+import com.example.therapp.ui.components.pose.calculators.RepetitionCounter
+import com.example.therapp.ui.components.pose.calculators.VectorAngleCalculator
+import com.example.therapp.ui.components.pose.models.RepetitionData
 import com.example.therapp.ui.components.pose.transformers.CoordinateTransformer
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 
@@ -20,7 +23,8 @@ import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 class PoseDataProcessor(
     private val transformer: CoordinateTransformer,
     private val angleCalculator: AngleCalculator = VectorAngleCalculator(),
-    private val arcBuilder: ArcDataBuilder = ArcDataBuilder(transformer)
+    private val arcBuilder: ArcDataBuilder = ArcDataBuilder(transformer),
+    private val repetitionCounter: RepetitionCounter
 ) {
     fun processAngle(
         p1: NormalizedLandmark,
@@ -44,4 +48,23 @@ class PoseDataProcessor(
     fun isTrackedJoint(jointId: Int, trackedPoints: List<Joint>): Boolean {
         return trackedPoints.any { it.id == jointId }
     }
+
+    fun processAngleAndReps(
+        joint: Joint, // Pasamos el `Joint` completo
+        start: NormalizedLandmark,
+        center: NormalizedLandmark,
+        end: NormalizedLandmark
+    ) : Pair<AngleData, RepetitionData>{
+        val angleData = processAngle(start, center, end)
+
+        repetitionCounter.updateRepetition(joint, angleData.degrees)
+        val repCount = repetitionCounter.getRepetitionsFor(joint)
+        val repTextPosition =
+            Offset(angleData.position.x, angleData.position.y + 40f) // Ajusta el '40f'
+        val repetitionData = RepetitionData(repCount, repTextPosition)
+
+        return Pair(angleData, repetitionData)
+    }
+
+
 }

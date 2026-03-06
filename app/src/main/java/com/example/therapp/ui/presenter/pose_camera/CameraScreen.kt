@@ -91,6 +91,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -99,6 +100,7 @@ import androidx.core.util.Consumer
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
+import com.example.therapp.R
 import com.example.therapp.ui.components.pose.models.Joint
 import com.example.therapp.ui.components.CircularBtn
 import com.example.therapp.ui.components.pose.PoseOverlay
@@ -183,6 +185,8 @@ fun CameraScreen(
         )
     }
     var showJointSelector by remember { mutableStateOf(false) }
+    var showAngle by remember { mutableStateOf(true) }
+    var showRepetitions by remember { mutableStateOf(true) }
 
     val uploadState by viewModel.uploadState.collectAsState()
     val uploadProgress by viewModel.uploadProgress.collectAsState()
@@ -326,6 +330,8 @@ fun CameraScreen(
                 imageWidth = inputImageWidth,
                 imageHeight = inputImageHeight,
                 trackedPoints = selectedJoints.toList(),
+                showAngle = showAngle,
+                showRepetitions = showRepetitions,
                 modifier = Modifier
 //                    .padding(50.dp)
                     .fillMaxSize()
@@ -461,7 +467,16 @@ fun CameraScreen(
                                 zoomRatio = newZoom
                             }
                         )
-
+                        CircularBtn(
+                            size = 40,
+                            icon = painterResource(id = R.drawable.angle),
+                            onClick = { showAngle = !showAngle }
+                        )
+                        CircularBtn(
+                            size = 40,
+                            icon = painterResource(id = R.drawable.repeating),
+                            onClick = { showRepetitions = !showRepetitions }
+                        )
 
                     }
 

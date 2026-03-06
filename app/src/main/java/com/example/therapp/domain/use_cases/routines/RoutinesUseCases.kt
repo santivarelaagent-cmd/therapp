@@ -9,5 +9,6 @@ package com.example.therapp.domain.use_cases.routines
  * @version 1.0
  */
 data class RoutinesUseCases(
-    val getScheduledTraining: GetScheduledTraining
+    val getScheduledTraining: GetScheduledTraining,
+    val refreshScheduledTraining: RefreshScheduledTraining
 )

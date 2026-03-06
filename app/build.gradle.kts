@@ -1,11 +1,11 @@
 plugins {
-    kotlin("kapt")
     alias(libs.plugins.dagger.hilt.android)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -51,7 +51,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material3) // Usaremos PullToRefresh de aquí
     implementation(libs.androidx.navigation.common.android)
     implementation(libs.play.services.vision)
     implementation(libs.pose.detection.common)
@@ -65,7 +65,7 @@ dependencies {
 
     //Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     //Hilt Nav
     implementation(libs.androidx.hilt.navigation.compose)
@@ -107,9 +107,13 @@ dependencies {
 
     //Glide
     implementation(libs.glide.compose)
-
     implementation(libs.bundles.camera)
-}
-kapt {
-    correctErrorTypes = true
+
+    // Media3
+    implementation(libs.bundles.media3)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 }

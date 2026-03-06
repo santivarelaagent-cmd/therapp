@@ -1,4 +1,4 @@
-package com.example.therapp.ui.components.pose.strategies.scale
+package com.example.therapp.ui.components.pose.strategies
 
 
 /**
@@ -8,8 +8,8 @@ package com.example.therapp.ui.components.pose.strategies.scale
  * @since 10/17/2025
  * @version 1.0
  */
-class FillScaleStrategy : ScaleStrategy {
+class FitScaleStrategy : ScaleStrategy {
     override fun calculate(canvasW: Float, canvasH: Float, imageW: Int, imageH: Int): Float {
-        return maxOf(canvasW / imageW, canvasH / imageH)
+        return minOf(canvasW / imageW, canvasH / imageH)
     }
 }

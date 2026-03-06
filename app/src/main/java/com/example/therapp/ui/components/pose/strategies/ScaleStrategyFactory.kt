@@ -1,4 +1,4 @@
-package com.example.therapp.ui.components.pose.strategies.scale
+package com.example.therapp.ui.components.pose.strategies
 
 import com.google.mediapipe.tasks.vision.core.RunningMode
 

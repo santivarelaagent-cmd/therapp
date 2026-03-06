@@ -1,34 +1,40 @@
 package com.example.therapp.di.modules
 
 import com.example.therapp.data.auth.AuthRepositoryImpl
-import com.example.therapp.data.auth.remote.AuthApi
 import com.example.therapp.data.routines.RoutinesRepositoryImpl
-import com.example.therapp.data.routines.remote.RoutinesApi
 import com.example.therapp.domain.repository.AuthRepository
 import com.example.therapp.domain.repository.RoutinesRepository
-import com.example.therapp.security.AsyncStorage
-import com.google.gson.Gson
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object RepositoryModule {
+abstract class RepositoryModule {
 
-    @Provides
-    @Singleton
-    fun provideAuthRepository(
-        asyncStorage: AsyncStorage,
-        authApi: AuthApi,
-        gson: Gson
-    ): AuthRepository = AuthRepositoryImpl(asyncStorage, authApi, gson)
+//    @Provides
+//    @Singleton
+//    fun provideAuthRepository(
+//        asyncStorage: AsyncStorage,
+//        authApi: AuthApi,
+//        gson: Gson
+//    ): AuthRepository = AuthRepositoryImpl(asyncStorage, authApi, gson)
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideRoutinesRepository(
-        routinesApi: RoutinesApi
-    ): RoutinesRepository = RoutinesRepositoryImpl(routinesApi)
+    abstract fun bindAuthRepository(authRepositoryImpl: AuthRepositoryImpl): AuthRepository
+
+
+//    @Provides
+//    @Singleton
+//    fun provideRoutinesRepository(
+//        routinesApi: RoutinesApi
+//    ): RoutinesRepository = RoutinesRepositoryImpl(routinesApi)
+
+    @Binds
+    @Singleton
+    abstract fun bindRoutinesRepository(routinesRepositoryImpl: RoutinesRepositoryImpl): RoutinesRepository
+
 }

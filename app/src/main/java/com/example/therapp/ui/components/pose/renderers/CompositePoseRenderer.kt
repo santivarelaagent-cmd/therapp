@@ -1,4 +1,4 @@
-package com.example.therapp.ui.components.pose.strategies.renderer
+package com.example.therapp.ui.components.pose.renderers
 
 import androidx.compose.ui.graphics.drawscope.DrawScope
 

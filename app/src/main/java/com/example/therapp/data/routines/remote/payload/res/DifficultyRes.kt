@@ -8,5 +8,5 @@ data class DifficultyRes(
     val exerciseId: Int,
     val name: String,
     val description: String,
-    val ranges: List<String>
+    val ranges: List<RangeRes>
 )

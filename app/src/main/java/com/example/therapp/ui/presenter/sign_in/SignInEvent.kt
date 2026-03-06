@@ -5,4 +5,5 @@ sealed class SignInEvent {
     data class PasswordChanged(val password: String) : SignInEvent()
     object LoginButtonClicked : SignInEvent()
     object ForgotPasswordButtonClicked : SignInEvent()
+    object ErrorHandled : SignInEvent()
 }

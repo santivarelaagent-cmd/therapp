@@ -1,7 +1,8 @@
 package com.example.therapp.domain.repository
 
 import com.example.therapp.common.api.ApiResponse
-import com.example.therapp.data.routines.remote.payload.res.ScheduledTrainingRes
+import com.example.therapp.domain.model.Routine
+import com.example.therapp.domain.model.ScheduledTraining
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -12,5 +13,7 @@ import kotlinx.coroutines.flow.Flow
  * @version 1.0
  */
 interface RoutinesRepository {
-    fun getScheduledTraining(): Flow<ApiResponse<List<ScheduledTrainingRes>>>
+    fun getScheduledTraining(): Flow<ApiResponse<List<ScheduledTraining>>>
+    suspend fun refreshScheduledTraining(): ApiResponse<Unit>
+    fun getRoutineById(id: Int): Flow<Routine?>
 }

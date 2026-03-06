@@ -20,4 +20,7 @@ sealed class HomeRoutes {
 
     @Serializable
     object CameraScreen : HomeRoutes()
+
+    @Serializable
+    data class RoutineDetailScreen(val routineId: Int) : HomeRoutes()
 }

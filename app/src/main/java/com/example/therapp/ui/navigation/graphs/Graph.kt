@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
  * @since 8/31/2025
  * @version 1.0
  */
+@Serializable
 sealed class Graph {
     @Serializable
     data object Auth : Graph()

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.example.nexum_cliente.ui.components.NavigationItemRow
 import com.example.therapp.ui.navigation.routes.DrawerRoutes
 import com.example.therapp.ui.presenter.home.DrawerNavigation
 

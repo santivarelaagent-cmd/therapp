@@ -14,6 +14,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -33,6 +34,9 @@ class ApiModule {
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .authenticator(authAuthenticator)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
@@ -45,7 +49,8 @@ class ApiModule {
     @Provides
     @Singleton
     fun provideAuthAPI(
-        retrofit: Retrofit.Builder
+        retrofit: Retrofit.Builder,
+        okHttpClient: OkHttpClient
     ): AuthApi =
         retrofit.build().create(AuthApi::class.java)
 

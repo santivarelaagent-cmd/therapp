@@ -1,4 +1,4 @@
-package com.example.therapp.ui.components
+package com.example.nexum_cliente.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row

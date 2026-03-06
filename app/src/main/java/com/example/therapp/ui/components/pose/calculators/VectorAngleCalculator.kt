@@ -1,4 +1,4 @@
-package com.example.therapp.ui.components.pose.strategies.angle
+package com.example.therapp.ui.components.pose.calculators
 
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlin.math.abs

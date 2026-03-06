@@ -10,8 +10,8 @@ import com.google.mlkit.vision.pose.PoseLandmark
  * @version 1.0
  */
 enum class Joint(val id: Int, val jointName: String, val minAngle: Double, val maxAngle: Double) {
-    LEFT_ELBOW(PoseLandmark.LEFT_ELBOW, minAngle = 0.0, maxAngle = 180.0 , jointName ="Codo Izquierdo"),
-    RIGHT_ELBOW(PoseLandmark.RIGHT_ELBOW, minAngle = 0.0, maxAngle = 180.0, jointName = "Codo Derecho"),
+    LEFT_ELBOW(PoseLandmark.LEFT_ELBOW, minAngle = 50.0, maxAngle = 165.0 , jointName ="Codo Izquierdo"),
+    RIGHT_ELBOW(PoseLandmark.RIGHT_ELBOW, minAngle = 50.0, maxAngle = 165.0, jointName = "Codo Derecho"),
     LEFT_KNEE(PoseLandmark.LEFT_KNEE, minAngle = 0.0, maxAngle = 180.0, jointName = "Rodilla Izquierda"),
     RIGHT_KNEE(PoseLandmark.RIGHT_KNEE, minAngle = 0.0, maxAngle = 180.0, jointName = "Rodilla Derecha"),
     LEFT_SHOULDER(PoseLandmark.LEFT_SHOULDER, minAngle = 0.0, maxAngle = 180.0, jointName = "Hombro Izquierdo"),

@@ -35,6 +35,7 @@ import com.example.therapp.ui.components.NavigationDrawerBody
 import com.example.therapp.ui.components.NavigationDrawerHeader
 import com.example.therapp.ui.navigation.graphs.Graph
 import com.example.therapp.ui.navigation.graphs.homeGraph
+import com.example.therapp.ui.navigation.routes.DrawerRoutes
 import com.example.therapp.ui.navigation.routes.HomeRoutes
 import kotlinx.coroutines.launch
 
@@ -64,6 +65,8 @@ fun HomeScreen(
     val screens = listOf(
         HomeRoutes.RoutinesScreen,
         HomeRoutes.TherapiesScreen,
+        DrawerRoutes.ProfileScreen,
+        DrawerRoutes.SettingsScreen,
     )
     val showTopBar = screens.any { destination ->
         currentDestination?.hierarchy?.any {
@@ -74,36 +77,43 @@ fun HomeScreen(
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = showTopBar,
         drawerContent = {
-            if (showTopBar) {
-                ModalDrawerSheet(
-                    modifier = Modifier.width(200.dp)
-                ) {
-                    NavigationDrawerHeader(
-                        value = user?.firstName + " " + user?.lastName,
-                        name = user?.email
-                    )
-                    NavigationDrawerBody(DrawerNavigation.entries, navigateTo = {
-                        scope.launch { drawerState.apply { if (isClosed) open() else close() } }
-                        homeNavController.navigate(it) {
-                            popUpTo(it) {
-                                inclusive = true
-                            }
+            ModalDrawerSheet(
+                modifier = Modifier.width(200.dp)
+            ) {
+                NavigationDrawerHeader(
+                    value = if (user != null) "${user?.firstName} ${user?.lastName}" else "",
+                    name = user?.email ?: ""
+                )
+                NavigationDrawerBody(DrawerNavigation.entries, navigateTo = {
+                    scope.launch { drawerState.close() }
+                    homeNavController.navigate(it) {
+                        popUpTo(homeNavController.graph.findStartDestination().id) {
+                            saveState = true
                         }
-                    })
-                }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                })
             }
         }
     ) {
         Scaffold(
             topBar = {
-                AppToolBar(
-                    toolbarTitle = "TherApp",
-                    signOutButtonClicked = {
-                        viewModel.signOut()
-                    },
-                    navButtonClicked = { scope.launch { drawerState.apply { if (isClosed) open() else close() } } }
-                )
+                if (showTopBar) {
+                    AppToolBar(
+                        toolbarTitle = "TherApp",
+                        signOutButtonClicked = {
+                            viewModel.signOut()
+                        },
+                        navButtonClicked = {
+                            scope.launch {
+                                if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                            }
+                        }
+                    )
+                }
             },
             bottomBar = {
                 HomeBottomBar(
@@ -126,7 +136,6 @@ fun HomeScreen(
                     .fillMaxSize()
                     .padding(contentPadding)
                     .background(Color(0xFF3B4048)),
-//                    .border(1.dp, Color.Red),
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
             ) {
                 NavHost(

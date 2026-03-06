@@ -1,14 +1,14 @@
 package com.example.therapp.ui.presenter.sign_in
 
 data class SignInState(
-    var username: String = "",
-    var password: String = "",
-    var isLoading: Boolean = false,
-    var isSignedIn: Boolean = false,
+    val username: String = "",
+    val password: String = "",
+    val isLoading: Boolean = false,
+    val isSignedIn: Boolean = false,
 
-    var isError: Boolean = false,
-    var errorMessage: String = "",
+    val isError: Boolean = false,
+    val errorMessage: String = "",
 
-    var usernameError: Boolean = false,
-    var passwordError: Boolean = false
+    val usernameError: Boolean = false,
+    val passwordError: Boolean = false
 )

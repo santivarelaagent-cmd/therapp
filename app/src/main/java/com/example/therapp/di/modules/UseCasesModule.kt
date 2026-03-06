@@ -7,6 +7,7 @@ import com.example.therapp.domain.use_cases.auth.IsSignedIn
 import com.example.therapp.domain.use_cases.auth.SignIn
 import com.example.therapp.domain.use_cases.auth.SignOut
 import com.example.therapp.domain.use_cases.routines.GetScheduledTraining
+import com.example.therapp.domain.use_cases.routines.RefreshScheduledTraining
 import com.example.therapp.domain.use_cases.routines.RoutinesUseCases
 import dagger.Module
 import dagger.Provides
@@ -30,6 +31,7 @@ object UseCasesModule {
     @Singleton
     fun provideRoutinesUseCases(routinesRepository: RoutinesRepository): RoutinesUseCases =
         RoutinesUseCases(
-            getScheduledTraining = GetScheduledTraining(routinesRepository)
+            getScheduledTraining = GetScheduledTraining(routinesRepository),
+            refreshScheduledTraining = RefreshScheduledTraining(routinesRepository)
         )
 }

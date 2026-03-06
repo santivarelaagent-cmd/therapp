@@ -7,7 +7,7 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
-composeBom = "2024.04.01"
+composeBom = "2024.12.01"
 hiltVersion = "2.51.1"
 hiltNavigationCompose = "1.2.0"
 navigationCommonAndroid = "2.9.2"
@@ -19,6 +19,9 @@ googleServices = "4.4.1"
 google = "4.4.1"
 firebaseBom = "32.8.1"
 composeVersion = "1.0.0-beta01"
+room = "2.6.1"
+ksp = "2.0.0-1.0.21"
+media3 = "1.5.1"
 
 
 #Okhttp
@@ -55,6 +58,7 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material = { group = "androidx.compose.material", name = "material" }
 
 # Hilt
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltVersion" }
@@ -115,11 +119,19 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 play-services-vision = { group = "com.google.android.gms", name = "play-services-vision", version.ref = "playServicesVision" }
 pose-detection-common = { group = "com.google.mlkit", name = "pose-detection-common", version.ref = "poseDetectionCommon" }
 
+# Room
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
+# Media3
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
 
 [bundles]
 camera = ["androidx-camera-camera-lifecycle", "androidx-camera-camera2", "androidx-camera-core", "androidx-camera-view"]
-
+media3 = ["androidx-media3-exoplayer", "androidx-media3-ui", "androidx-media3-common"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -128,3 +140,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hiltVersion" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

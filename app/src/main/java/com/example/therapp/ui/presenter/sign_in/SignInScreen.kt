@@ -1,5 +1,7 @@
 package com.example.therapp.ui.presenter.sign_in
 
+import android.view.Gravity
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,17 +21,20 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,9 +54,39 @@ import androidx.hilt.navigation.compose.hiltViewModel
  * @version 1.0
  */
 @Composable
-@Preview(showBackground = true, showSystemUi = true)
 fun SignInScreen(
     viewModel: SignInViewModel = hiltViewModel()
+) {
+    val state = viewModel.state
+    SignInScreenContent(
+        state = state,
+        onUsernameChanged = { viewModel.onEvent(SignInEvent.UsernameChanged(it)) },
+        onPasswordChanged = { viewModel.onEvent(SignInEvent.PasswordChanged(it)) },
+        onLoginButtonClicked = { viewModel.onEvent(SignInEvent.LoginButtonClicked) }
+    )
+    Error(state = state, onErrorHandled = { viewModel.onEvent(SignInEvent.ErrorHandled) })
+}
+
+@Composable
+private fun Error(state: SignInState, onErrorHandled: () -> Unit) {
+    val context = LocalContext.current
+    LaunchedEffect(state.errorMessage) {
+        if (state.errorMessage.isNotEmpty()) {
+            val toast = Toast.makeText(context, "Error: ${state.errorMessage}", Toast.LENGTH_LONG)
+            toast.setGravity(Gravity.BOTTOM, 0, 300)
+            toast.show()
+            onErrorHandled()
+        }
+    }
+}
+
+@Composable
+@Preview(showBackground = true, showSystemUi = true)
+private fun SignInScreenContent(
+    state: SignInState = SignInState(),
+    onUsernameChanged: (String) -> Unit = {},
+    onPasswordChanged: (String) -> Unit = {},
+    onLoginButtonClicked: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -84,7 +120,8 @@ fun SignInScreen(
                     modifier = Modifier
                         .fillMaxWidth(),
                     shape = RoundedCornerShape(30.dp),
-                    value = viewModel.state.username,
+                    value = state.username,
+                    enabled = !state.isLoading,
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White,
@@ -100,7 +137,7 @@ fun SignInScreen(
                     ),
                     label = { Text(text = "Nombre de usuario") },
                     onValueChange = {
-                        viewModel.onEvent(SignInEvent.UsernameChanged(it))
+                        onUsernameChanged(it)
                     },
                 )
                 val passwordVisible = rememberSaveable { mutableStateOf(false) }
@@ -108,7 +145,8 @@ fun SignInScreen(
                     modifier = Modifier
                         .fillMaxWidth(),
                     shape = RoundedCornerShape(30.dp),
-                    value = viewModel.state.password,
+                    value = state.password,
+                    enabled = !state.isLoading,
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White,
@@ -127,42 +165,49 @@ fun SignInScreen(
                         val icon =
                             if (passwordVisible.value) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility
                         IconButton(
-                            onClick = { passwordVisible.value = !passwordVisible.value }
+                            onClick = { passwordVisible.value = !passwordVisible.value },
+                            enabled = !state.isLoading
                         ) {
                             Icon(icon, contentDescription = "Visibility")
                         }
                     },
                     visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                     onValueChange = {
-                        viewModel.onEvent(SignInEvent.PasswordChanged(it))
+                        onPasswordChanged(it)
                     },
                 )
                 Button(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
+                    enabled = !state.isLoading,
                     colors = ButtonColors(
                         containerColor = Color(0xFF22272B), //#22272B
-                        disabledContainerColor = Color.Red,
+                        disabledContainerColor = Color(0xFF22272B).copy(alpha = 0.5f),
                         contentColor = Color.White,
                         disabledContentColor = Color.White
                     ),
                     shape = RoundedCornerShape(30.dp),
                     onClick = {
-                        viewModel.onEvent(SignInEvent.LoginButtonClicked)
+                        onLoginButtonClicked()
                     },
                 ) {
-                    Text(
-                        text = "Iniciar sesión",
-                        fontSize = 20.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
-                    )
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Iniciar sesión",
+                            fontSize = 20.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
-
     }
-
 }
-

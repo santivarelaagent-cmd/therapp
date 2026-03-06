@@ -15,14 +15,16 @@ import java.util.Locale
  */
 //private val IP = "172.27.80.1"
 //private val IP = "172.31.16.1"s
-private val IP = "192.168.2.102"
+//private val IP = "192.168.1.39"
+private val IP = "10.0.2.2"
+
 private val PORT = "8000"
 private val SCHEME = "http"
 
 //http://192.168.2.105:8000/
-//val HOST_URL = "http://$IP:$PORT"
+val HOST_URL = "http://$IP:$PORT"
 //val HOST_URL = "$SCHEME://$IP:$PORT"
-val HOST_URL = "https://telerehabilitacion-be.onrender.com"
+//val HOST_URL = "https://telerehabilitacion-be.onrender.com"
 
 
 @RequiresApi(Build.VERSION_CODES.O)
